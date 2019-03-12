@@ -13,14 +13,16 @@ const propTypes = {
   oidcUser: PropTypes.object, //TODO : récuperer le proptypes depuis OIDC client ?
   error: PropTypes.string.isRequired,
   login: PropTypes.func.isRequired,
-  logout: PropTypes.func.isRequired
+  logout: PropTypes.func.isRequired,
+  isLogout: PropTypes.bool,
 };
 
 const defaultProps = {
   notAuthenticated: null,
   notAuthorized: null,
   authenticating: null,
-  isEnabled: true
+  isEnabled: true,
+  isLogout: false,
 };
 
 const AuthenticationProviderComponent = ({
@@ -33,7 +35,8 @@ const AuthenticationProviderComponent = ({
   notAuthenticated,
   notAuthorized,
   authenticating,
-  children
+  children,
+  isLogout,
 }) => (
   <AuthenticationContext.Provider
     value={{
@@ -43,10 +46,14 @@ const AuthenticationProviderComponent = ({
       login,
       logout,
       authenticating,
-      isEnabled
+      isEnabled,
+      isLogout,
     }}
   >
-    <OidcRoutes notAuthenticated={notAuthenticated} notAuthorized={notAuthorized}>
+    <OidcRoutes
+      notAuthenticated={notAuthenticated}
+      notAuthorized={notAuthorized}
+    >
       {children}
     </OidcRoutes>
   </AuthenticationContext.Provider>
@@ -54,5 +61,7 @@ const AuthenticationProviderComponent = ({
 
 AuthenticationProviderComponent.propTypes = propTypes;
 AuthenticationProviderComponent.defaultProps = defaultProps;
+
+export const AuthenticationConsumer = AuthenticationContext.Consumer;
 
 export default AuthenticationProviderComponent;

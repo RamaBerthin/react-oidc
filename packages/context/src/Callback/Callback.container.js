@@ -1,11 +1,11 @@
+import React, { useEffect, useCallback } from 'react';
 import { withRouter } from 'react-router-dom';
-import { compose, withProps, lifecycle, withHandlers } from 'recompose';
 
-import { getUserManager, oidcLog } from '../Services';
+import { getUserManager, oidcLog, withServices } from '../Services';
 import CallbackComponent from './Callback.component';
 
-export const onRedirectSuccess = ({ history }) => user => {
-  oidcLog.info('Successfull Callback');
+export const onRedirectSuccess = (history, oidcLog) => user => {
+  oidcLog.info('Successfull login Callback');
   if (user.state.url) {
     history.push(user.state.url);
   } else {
@@ -13,39 +13,25 @@ export const onRedirectSuccess = ({ history }) => user => {
   }
 };
 
-export const onRedirectError = ({ history }) => error => {
-  const { message } = error;
-  oidcLog.error(`There was an error handling the token callback: ${error.message}`);
-  history.push(`/authentication/not-authenticated?message=${message}`);
+export const onRedirectError = (history, oidcLog) => ({ message }) => {
+  oidcLog.error(`There was an error handling the token callback: ${message}`);
+  history.push(
+    `/authentication/not-authenticated?message=${encodeURIComponent(message)}`
+  );
 };
 
-export const componentDidMountFunction = async props => {
-  try {
-    const user = await props.userManager.signinRedirectCallback();
-    props.onRedirectSuccess(user);
-  } catch (error) {
-    props.onRedirectError(error);
-  }
+export const CallbackContainer = ({ history, getUserManager, oidcLog }) => {
+  const onSuccess = useCallback(onRedirectSuccess(history, oidcLog), [history]);
+  const onError = useCallback(onRedirectError(history, oidcLog), [history]);
+
+  useEffect(() => {
+    getUserManager()
+      .signinRedirectCallback()
+      .then(onSuccess, onError);
+  }, []);
+  return <CallbackComponent />;
 };
 
-const withLifeCycle = lifecycle({
-  async componentDidMount() {
-    componentDidMountFunction(this.props);
-  },
-});
-
-const wrapUserManager = () => ({ userManager: getUserManager() });
-
-export const withCallbackHandlers = withHandlers({
-  onRedirectSuccess,
-  onRedirectError,
-});
-
-const enhance = compose(
-  withRouter,
-  withCallbackHandlers,
-  withProps(wrapUserManager),
-  withLifeCycle
+export default withRouter(
+  withServices(CallbackContainer, { getUserManager, oidcLog })
 );
-
-export default enhance(CallbackComponent);

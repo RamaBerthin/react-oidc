@@ -1,5 +1,5 @@
 import * as React from 'react';
-import renderer from 'react-test-renderer';
+import { render } from 'react-testing-library';
 import Component from './AuthenticationRoutes';
 
 jest.mock('../OidcComponents', () => ({
@@ -21,7 +21,7 @@ describe('Authenticating test suite', () => {
       url: 'http://url.com',
     };
     const ComponentRend = Component();
-    const tree = renderer.create(<ComponentRend match={matchMock} />).toJSON();
-    expect(tree).toMatchSnapshot();
+    const { asFragment } = render(<ComponentRend match={matchMock} />);
+    expect(asFragment()).toMatchSnapshot();
   });
 });
